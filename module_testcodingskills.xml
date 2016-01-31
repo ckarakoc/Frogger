@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_testcodingskills" default="compile.module.testcodingskills">
+    <dirname property="module.testcodingskills.basedir" file="${ant.file.module_testcodingskills}"/>
+
+    <property name="module.jdk.home.testcodingskills" value="${project.jdk.home}"/>
+    <property name="module.jdk.bin.testcodingskills" value="${project.jdk.bin}"/>
+    <property name="module.jdk.classpath.testcodingskills" value="${project.jdk.classpath}"/>
+
+    <property name="compiler.args.testcodingskills" value="-encoding UTF-8 -source 1.5 -target 1.5 ${compiler.args}"/>
+
+    <property name="testcodingskills.output.dir" value="${module.testcodingskills.basedir}/target/classes"/>
+    <property name="testcodingskills.testoutput.dir" value="${module.testcodingskills.basedir}/target/test-classes"/>
+
+    <path id="testcodingskills.module.bootclasspath">
+        <!-- Paths to be included in compilation bootclasspath -->
+    </path>
+
+    <path id="testcodingskills.module.production.classpath">
+        <path refid="${module.jdk.classpath.testcodingskills}"/>
+    </path>
+
+    <path id="testcodingskills.runtime.production.module.classpath">
+        <pathelement location="${testcodingskills.output.dir}"/>
+    </path>
+
+    <path id="testcodingskills.module.classpath">
+        <path refid="${module.jdk.classpath.testcodingskills}"/>
+        <pathelement location="${testcodingskills.output.dir}"/>
+    </path>
+
+    <path id="testcodingskills.runtime.module.classpath">
+        <pathelement location="${testcodingskills.testoutput.dir}"/>
+        <pathelement location="${testcodingskills.output.dir}"/>
+    </path>
+
+
+    <patternset id="excluded.from.module.testcodingskills">
+        <patternset refid="ignored.files"/>
+    </patternset>
+
+    <patternset id="excluded.from.compilation.testcodingskills">
+        <patternset refid="excluded.from.module.testcodingskills"/>
+    </patternset>
+
+    <path id="testcodingskills.module.sourcepath">
+        <dirset dir="${module.testcodingskills.basedir}">
+            <include name="src/main/java"/>
+            <include name="src/main/resources"/>
+        </dirset>
+    </path>
+
+    <path id="testcodingskills.module.test.sourcepath">
+        <dirset dir="${module.testcodingskills.basedir}">
+            <include name="src/test/java"/>
+        </dirset>
+    </path>
+
+
+    <target name="compile.module.testcodingskills"
+            depends="compile.module.testcodingskills.production,compile.module.testcodingskills.tests"
+            description="Compile module TestCodingSkills"/>
+
+    <target name="compile.module.testcodingskills.production" depends="register.custom.compilers"
+            description="Compile module TestCodingSkills; production classes">
+        <mkdir dir="${testcodingskills.output.dir}"/>
+        <javac2 destdir="${testcodingskills.output.dir}" debug="${compiler.debug}"
+                nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true"
+                executable="${module.jdk.bin.testcodingskills}/javac">
+            <compilerarg line="${compiler.args.testcodingskills}"/>
+            <bootclasspath refid="testcodingskills.module.bootclasspath"/>
+            <classpath refid="testcodingskills.module.production.classpath"/>
+            <src refid="testcodingskills.module.sourcepath"/>
+            <patternset refid="excluded.from.compilation.testcodingskills"/>
+        </javac2>
+
+        <copy todir="${testcodingskills.output.dir}">
+            <fileset dir="${module.testcodingskills.basedir}/src/main/java">
+                <patternset refid="compiler.resources"/>
+                <type type="file"/>
+            </fileset>
+            <fileset dir="${module.testcodingskills.basedir}/src/main/resources">
+                <patternset refid="compiler.resources"/>
+                <type type="file"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="compile.module.testcodingskills.tests"
+            depends="register.custom.compilers,compile.module.testcodingskills.production"
+            description="compile module TestCodingSkills; test classes" unless="skip.tests">
+        <mkdir dir="${testcodingskills.testoutput.dir}"/>
+        <javac2 destdir="${testcodingskills.testoutput.dir}" debug="${compiler.debug}"
+                nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true"
+                executable="${module.jdk.bin.testcodingskills}/javac">
+            <compilerarg line="${compiler.args.testcodingskills}"/>
+            <bootclasspath refid="testcodingskills.module.bootclasspath"/>
+            <classpath refid="testcodingskills.module.classpath"/>
+            <src refid="testcodingskills.module.test.sourcepath"/>
+            <patternset refid="excluded.from.compilation.testcodingskills"/>
+        </javac2>
+
+        <copy todir="${testcodingskills.testoutput.dir}">
+            <fileset dir="${module.testcodingskills.basedir}/src/test/java">
+                <patternset refid="compiler.resources"/>
+                <type type="file"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="clean.module.testcodingskills" description="cleanup module">
+        <delete dir="${testcodingskills.output.dir}"/>
+        <delete dir="${testcodingskills.testoutput.dir}"/>
+    </target>
+</project>
