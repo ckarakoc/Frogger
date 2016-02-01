@@ -3,9 +3,11 @@ package frogger;
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -17,7 +19,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextBoundsType;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -35,11 +36,13 @@ public class FroggerApp extends Application {
     private Node frog;
 
     private static int lives = 3;
-    private boolean lose;
-    private boolean win;
+    private boolean lose, win, superSaiyan;
     private static HBox frogLives;
     private static double difficulty = 0.075;
     private static int level = 1;
+    private int charge = 0;
+    private int speed = 1;
+    private Rectangle rect;
 
     private Parent createContent() {
         root = new Pane();
@@ -58,12 +61,23 @@ public class FroggerApp extends Application {
         layout.getChildren().addAll(circle, levelIndicator);
         layout.setTranslateX(800 - 19 * 2);
 
-        root.getChildren().addAll(frog, initLives(), layout);
 
+        ProgressBar energy = new ProgressBar();
+        energy.setPrefSize(200, 30);
+        energy.setTranslateX(500);
+        energy.setTranslateY(5);
+        energy.setStyle("-fx-accent: lime;");
+
+        root.getChildren().addAll(frog, initLives(), layout, energy);
 
         timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
+                if(energy.getProgress() == 1F) {
+                    energy.setProgress(1F);
+                    energy.setStyle("-fx-accent: red;");
+                } else energy.setProgress((charge/100F));
+
                 onUpdate();
             }
         };
@@ -72,6 +86,8 @@ public class FroggerApp extends Application {
 
         return root;
     }
+
+
 
     private Node initLives() {
         Circle liveOne = new Circle(19, Color.RED);
@@ -86,7 +102,7 @@ public class FroggerApp extends Application {
     }
 
     private Node initFrog() {
-        Rectangle rect = new Rectangle(38, 38, Color.GREEN);
+        rect = new Rectangle(38, 38, Color.GREEN);
         rect.setTranslateY(600 - 39);
         rect.setTranslateX(400 - 39);
 
@@ -145,11 +161,13 @@ public class FroggerApp extends Application {
             cars.add(spawnRightCar());
         }
 
+        if (superSaiyan)
+            rect.setFill(Color.YELLOW);
 
-        checkstate();
+        checkState();
     }
 
-    private void checkstate() {
+    private void dead(){
         if (lives == 0) {
             timer.stop();
 
@@ -168,17 +186,23 @@ public class FroggerApp extends Application {
             root.getChildren().remove(frog);
             lose = true;
         }
+    }
 
+    private void intersect(){
         for (Node car : cars) {
-            if (car.getBoundsInParent().intersects(frog.getBoundsInParent())) {
+            if (car.getBoundsInParent().intersects(frog.getBoundsInParent()) && !superSaiyan) {
                 frog.setTranslateX(400 - 39);
                 frog.setTranslateY(600 - 39);
                 frogLives.getChildren().remove(lives - 1);
                 lives--;
                 return;
+            } else if(superSaiyan && car.getBoundsInParent().intersects(frog.getBoundsInParent())){
+                ((Rectangle)car).setFill(Color.BLUE);
             }
         }
+    }
 
+    private void nextLevel(){
         if (frog.getTranslateY() <= 0) {
             timer.stop();
 
@@ -197,7 +221,14 @@ public class FroggerApp extends Application {
 
             difficulty += 0.075;
             win = true;
+            superSaiyan = false;
         }
+    }
+
+    private void checkState() {
+        dead();
+        intersect();
+        nextLevel();
     }
 
 
@@ -223,22 +254,29 @@ public class FroggerApp extends Application {
         primaryStage.setScene(new Scene(createContent()));
 
         primaryStage.getScene().setOnKeyPressed(e -> {
-            switch ((e.getCode())) {
+            switch (e.getCode()) {
                 case W:
                 case UP:
-                    frog.setTranslateY(frog.getTranslateY() - 40);
+                    frog.setTranslateY(frog.getTranslateY() - 40 * speed);
                     break;
                 case S:
                 case DOWN:
-                    frog.setTranslateY(frog.getTranslateY() + 40);
+                    frog.setTranslateY(frog.getTranslateY() + 40 * speed);
                     break;
                 case A:
                 case LEFT:
-                    frog.setTranslateX(frog.getTranslateX() - 40);
+                    frog.setTranslateX(frog.getTranslateX() - 40 * speed);
                     break;
                 case D:
                 case RIGHT:
-                    frog.setTranslateX(frog.getTranslateX() + 40);
+                    frog.setTranslateX(frog.getTranslateX() + 40 * speed);
+                    break;
+                case TAB:
+                    if(charge != 100)
+                        charge++;
+                    else
+                        superSaiyan = true;
+                    System.out.println("charging " + charge + "%");
                     break;
                 case ENTER:
                     if (lose) {
@@ -259,8 +297,16 @@ public class FroggerApp extends Application {
                 default:
                     break;
             }
-
         });
+
+        primaryStage.getScene().setOnKeyReleased(e ->{
+            switch(e.getCode()) {
+                case TAB:
+                    charge = 0;
+                    break;
+            }
+        });
+
 
         primaryStage.show();
 
